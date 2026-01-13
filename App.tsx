@@ -18,10 +18,10 @@ const App: React.FC = () => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
 
-    // Client-side check: Reduced to 9MB to ensure Base64 encoded payload stays within API safe limits (approx <13MB total payload).
-    // Larger files would require server-side File API implementation not available in this client-side demo.
+    // Client-side check: Reduced to 9MB to ensure Base64 encoded payload stays within API safe limits.
+    // Base64 encoding adds ~33% overhead. 9MB file -> ~12MB payload (safe for ~20MB limit).
     if (file.size > 9 * 1024 * 1024) {
-        setError("文件过大。由于演示版API限制，请上传 9MB 以内的短视频片段。");
+        setError("文件过大。为确保分析成功率，请上传 9MB 以内的视频片段。");
         return;
     }
 
@@ -34,8 +34,20 @@ const App: React.FC = () => {
       setStage(Stage.Verdict);
       setMaxStageReached(Stage.Assignment); // Unlock up to assignment
     } catch (err) {
-      setError("分析失败。可能是视频编码问题或服务繁忙，请重试。");
-      console.error(err);
+      // Improve error logging to help debug payload issues
+      console.error("Analysis Failed:", err);
+      let errorMsg = "分析失败。";
+      
+      if (err instanceof Error) {
+        if (err.message.includes("413") || err.message.includes("Too Large")) {
+            errorMsg += "文件体积超出 API 单次处理上限，请尝试压缩视频或截取更短的片段。";
+        } else if (err.message.includes("400")) {
+             errorMsg += "视频格式不受支持或数据已损坏。";
+        } else {
+             errorMsg += "可能是网络波动或服务繁忙，请稍后重试。";
+        }
+      }
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

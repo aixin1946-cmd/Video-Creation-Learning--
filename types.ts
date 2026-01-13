@@ -68,6 +68,13 @@ export interface FeedbackItem {
   priority: 'High' | 'Medium' | 'Low';
 }
 
+export interface SuggestedShot {
+  scriptSegment: string;
+  visualSuggestion: string;
+  shotType: string;
+  reasoning: string;
+}
+
 // The complete analysis object returned by Gemini
 export interface AnalysisResult {
   caseCard: CaseCard;
@@ -92,4 +99,5 @@ export interface ReviewResult {
   score: number;
   feedback: string;
   revisionPlan: FeedbackItem[];
+  suggestedShotList?: SuggestedShot[];
 }
